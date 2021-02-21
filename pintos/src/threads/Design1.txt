@@ -30,14 +30,36 @@ FirstName LastName <email@k-state.edu>
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+timer.c
+>int64_6 wakeup_tme: The earliest tick that this thread can wake up.
+>thread_sleep_time
+
+thread.c
+>static struct list sleep_list: List of all threads that are asleep. Processes are added to this list when their status is set to sleep.
+>static int64_t next_wakeup_tme:
+>static struct lock sleep_lock: 
+>static void thread_set_wakeup(void): Checks if other threads need to wake up and removes itself from the list
+>static void thread_sleep(void):
+>static bool thread_sleep_comp: 
+>static void thread_wakeup: 
+>void thread_sleep_time: 
+
+thread.h
+>THREAD_SLEEPING: Threads that are waiting to be executed 
+>int64_t wakeup_time:
+
 
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe what happens in a call to your timer_sleep(),
 >> including the effects of the timer interrupt handler.
 
+>The while loop that existed in the method was removed, and we added the thread_sleep_time method which takes in wakeup_tme (timer_ticks() + ticks, replaces the int64_t start, this variable keeps track of the ticks since the thread has been awake) to increase priority to decrease likelyhood of thread being interrupted. The implementation of this method should iliminate the busy wait. 
+
 >> A3: What steps are taken to minimize the amount of time spent in
 >> the timer interrupt handler?
+
+> Looping over only the sleeping threads and awoken threads as opposed to all threads. Within the sleep and wake threads, we're doing some basic list/unblocking operations (probably needs more expalanation here too).
 
 
 ---- SYNCHRONIZATION ----
@@ -45,9 +67,12 @@ FirstName LastName <email@k-state.edu>
 >> A4: How are race conditions avoided when multiple threads call
 >> timer_sleep() simultaneously?
 
+> We have disabled interrupts before anything is done with the sleeping threads list (needs a bit more explanation).  
 
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
+
+> Interrupts are disabled right before thread_sleep is called (needs a bit more explanation). 
 
 
 ---- RATIONALE ----
@@ -55,7 +80,7 @@ FirstName LastName <email@k-state.edu>
 >> A6: Why did you choose this design?  In what ways is it superior to
 >> other designs that you considered?
 
-
+> The design only consideres looking at the threads that are asleep and awake. Depending on the status of the thread, we determined the interrupt being on/off, being locked/unlocked, the time needed to wake/sleep, etc. Instead of looking at every single threads, we have focused on looking at certain threads that need improvement to avoid busy wait. 
 
              PRIORITY SCHEDULING
              ===================
