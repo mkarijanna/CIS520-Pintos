@@ -4,6 +4,7 @@
 #include <random.h>
 #include <stdio.h>
 #include <string.h>
+#include "devices/timer.h"
 #include "threads/flags.h"
 #include "threads/interrupt.h"
 #include "threads/intr-stubs.h"
@@ -28,6 +29,8 @@ static struct list ready_list;
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
 
+static struct list sleep_list;
+
 /* Idle thread. */
 static struct thread *idle_thread;
 
@@ -36,6 +39,10 @@ static struct thread *initial_thread;
 
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
+
+static int64_t next_wakeup_tme = 9223372036854775807; 
+
+static struct lock sleep_lock;
 
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
@@ -70,6 +77,12 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
+static void thread_set_wakeup( void );
+static void thread_sleep( void );
+static bool thread_sleep_comp( const struct list_elem *a,
+                        const struct list_elem *b,
+                        void *aux );
+static void thread_wakeup( thread * wakeup_thread );
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -88,10 +101,11 @@ void
 thread_init (void) 
 {
   ASSERT (intr_get_level () == INTR_OFF);
-
+  lock_init ( &sleep_lock );
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+  list_init ( &sleep_list );
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -137,6 +151,10 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+  if( timer_ticks() >= next_wakeup_tme && !list_empty( &sleep_list ) )
+  {
+    thread_wakeup( list_entry (list_front (&sleep_list), struct thread, elem) );
+  }
 }
 
 /* Prints thread statistics. */
@@ -542,6 +560,76 @@ thread_schedule_tail (struct thread *prev)
     }
 }
 
+static void thread_set_wakeup( void )
+{
+//checks if other threads need to wakeup and removes self from list
+
+  
+  //list_pop_front( &sleep_list );
+  
+  
+  //check if next thread needs to be woken up
+  if( !list_empty(&sleep_list) )
+  {
+    
+    thread * nxt_thrd_ptr = list_entry (list_front (&sleep_list), struct thread, elem);
+    
+    if( nxt_thrd_ptr->wakeup_time == next_wakeup_tme )
+    {
+      thread_wakeup( nxt_thrd_ptr );
+    }
+    else{
+      next_wakeup_tme = nxt_thrd_ptr->wakeup_time;
+    }
+  }
+  
+}
+
+static void thread_sleep( void )
+{
+  enum intr_level old_level = intr_disable ();
+
+  ASSERT (!intr_context ());
+  ASSERT (intr_get_level () == INTR_OFF);
+
+  lock_acquire( &sleep_lock );
+  
+  list_push_front( &sleep_list, &(thread_current()->elem));
+  list_sort( &sleep_list, thread_sleep_comp, NULL);
+
+  lock_release( &sleep_lock );
+  
+  thread_current ()->status = THREAD_SLEEPING;
+
+  
+  
+  schedule ();
+  intr_set_level(old_level);
+}
+
+bool thread_sleep_comp( const struct list_elem *a,
+                        const struct list_elem *b,
+                        void *aux )
+{
+const thread * thrd_a_ptr = list_entry (a, struct thread, elem);
+const thread * thrd_b_ptr = list_entry (b, struct thread, elem);
+
+return thrd_a_ptr->wakeup_time < thrd_b_ptr->wakeup_time;
+}
+
+void thread_sleep_time( int64_t tme )
+{
+  //add sema and list stuff
+  // add timer to thread structure
+  thread_current()->wakeup_time = tme;
+  if(next_wakeup_tme > tme)
+    next_wakeup_tme = tme;
+
+  thread_sleep();
+
+  thread_set_wakeup();
+}
+
 /* Schedules a new process.  At entry, interrupts must be off and
    the running process's state must have been changed from
    running to some other state.  This function finds another
@@ -578,7 +666,23 @@ allocate_tid (void)
 
   return tid;
 }
-
+
+static void thread_wakeup( thread * wakeup_thread )
+{
+  enum intr_level old_level;
+
+  ASSERT (is_thread (wakeup_thread));
+
+  old_level = intr_disable ();
+
+  list_remove( &(wakeup_thread->elem) );
+
+  ASSERT (wakeup_thread->status == THREAD_SLEEPING);
+  list_push_back (&ready_list, &wakeup_thread->elem);
+  wakeup_thread->status = THREAD_READY;
+
+  intr_set_level (old_level);
+}
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
