@@ -463,3 +463,16 @@ install_page (void *upage, void *kpage, bool writable)
   return (pagedir_get_page (t->pagedir, upage) == NULL
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }
+
+/* --------- Karijanna's code starts here ---------- */
+/* Look through the parent thread's list of children for a child with child_tid */
+struct thread* process_get_child(struct thread* parent, tid_t child_tid UNUSED) {
+  struct list_elem* e;
+  for(e = list_front(&parent->children_list); e != NULL; e = e->next) {
+    struct thread *t = list_entry(e, struct thread, child_elem);
+    if(t->tid == child_tid) {
+      return t; // t is the child with child_tid
+    }
+  }
+  return NULL; // Not found
+}
