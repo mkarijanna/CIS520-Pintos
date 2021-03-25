@@ -99,8 +99,10 @@ typedef struct thread
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
     bool success;                       /* Detect user thread's success */
-#endif
 
+#endif
+    struct semaphore *temp_sema;       /* temporary solution while waiting on get_child_process */
+    struct thread * parent;              /* temp way to keep track of parent */
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   }thread;
