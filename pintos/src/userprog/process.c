@@ -29,7 +29,7 @@ tid_t
 process_execute (const char *file_name) 
 {
   char *fn_copy, *saveptr, *fn;
-;
+
   tid_t tid;
 
   /* Make a copy of FILE_NAME.
@@ -45,6 +45,7 @@ process_execute (const char *file_name)
   tid = thread_create (fn, PRI_DEFAULT, start_process, fn_copy);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
+  free(fn);
   return tid;
 }
 

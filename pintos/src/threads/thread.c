@@ -686,3 +686,23 @@ static void thread_wakeup( thread * wakeup_thread )
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+thread *
+find_thread_tid(tid_t tid){
+  struct thread *t;
+  struct list_elem *e;
+  enum intr_level old_level;
+  old_level = intr_disable ();
+
+
+  for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e))
+  {
+    t = list_entry (e, struct thread, allelem);
+    if(t->tid == tid) {
+      intr_set_level (old_level);
+      return t;
+    }
+  }
+  intr_set_level (old_level);
+  return NULL;
+}
+
