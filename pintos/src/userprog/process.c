@@ -475,9 +475,11 @@ setup_stack (void **esp, char **saveptr, const char *filename)
 
   argv[argc] = 0;
   int word_align = (size_t) *esp % 4;
-  *esp -= word_align;
-  memcpy(*esp, 0, word_align);
-
+  if(word_align){
+    *esp -= word_align;
+    byte_size += word_align;
+    memcpy (*esp, cont[i], strlen(cont[i])+1);
+  }
   for (i = argc; i >= 0; i--){
     *esp -= sizeof(char*);
     memcpy (*esp, &argv[i], sizeof(char*));
