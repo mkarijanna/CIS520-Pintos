@@ -520,6 +520,7 @@ install_page (void *upage, void *kpage, bool writable)
 
 /* --------- Karijanna's code starts here ---------- */
 /* Look through the parent thread's list of children for a child with child_tid */
+/*
 struct thread* process_get_child(struct thread* parent, tid_t child_tid UNUSED) {
   struct list_elem* e;
   for(e = list_front(&parent->children_list); e != NULL; e = e->next) {
@@ -530,3 +531,4 @@ struct thread* process_get_child(struct thread* parent, tid_t child_tid UNUSED) 
   }
   return NULL; // Not found
 }
+*/
