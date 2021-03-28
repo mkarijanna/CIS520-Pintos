@@ -418,7 +418,7 @@ int syscall_open( const char * file )
     file_info->id = ( list_entry( list_back( desc_list ), struct file_desc, elem)->id ) + 1;
   }
 
-  list_push_back( desc_list, &( file_info->elem ) );
+  //list_push_back( desc_list, &( file_info->elem ) );
   lock_release( &lock_file );
 
   return file_info->id;
