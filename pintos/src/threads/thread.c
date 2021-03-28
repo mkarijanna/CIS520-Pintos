@@ -706,3 +706,22 @@ find_thread_tid(tid_t tid){
   return NULL;
 }
 
+bool
+is_thread_running(tid_t tid){
+  struct thread *t;
+  struct list_elem *e;
+  enum intr_level old_level;
+  old_level = intr_disable ();
+
+
+  for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e))
+  {
+    t = list_entry (e, struct thread, allelem);
+    if(t->tid == tid) {
+      intr_set_level (old_level);
+      return true;
+    }
+  }
+  intr_set_level (old_level);
+  return false;
+}

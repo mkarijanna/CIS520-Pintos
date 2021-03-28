@@ -145,4 +145,6 @@ int thread_get_load_avg (void);
 
 void thread_sleep_time( int64_t tme );
 
+thread* find_thread_tid(tid_t tid);
+bool is_thread_running(tid_t tid);
 #endif /* threads/thread.h */
