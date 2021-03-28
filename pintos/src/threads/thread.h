@@ -94,15 +94,28 @@ typedef struct thread
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
+    /* Owned by process.c */
+    /* Used to wait if a thread is not loaded yet */
+    struct semaphore load_sema;
+    /* True when thread is done loading */
+    bool loaded;
 
 #ifdef USERPROG
-    /* Owned by userprog/process.c. */
+    /* Owned by process.c */
     uint32_t *pagedir;                  /* Page directory. */
     bool success;                       /* Detect user thread's success */
+    /* Indicates if the child is not dead */
+    struct semaphore alive_sema;
+    /* Owned by process.c */
+    /* The list of this thread's children */
+    struct list children_list;
+    /* List element for the children list */
+    struct list_elem child_elem;
 
 #endif
     struct semaphore *temp_sema;       /* temporary solution while waiting on get_child_process */
     struct thread * parent;              /* temp way to keep track of parent */
+  
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   }thread;
