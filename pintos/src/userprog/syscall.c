@@ -257,6 +257,7 @@ syscall_exit (int status)
     status = -1;
   }
   printf("%s: exit(%d)", t->name, status);
+  thread_exit();
 }
 
 /**************************** Kelcie's Code now ********************/
