@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "cstdio": "c",
+        "deque": "c",
+        "string": "c",
+        "vector": "c",
+        "functional": "c",
+        "*.inc": "c",
+        "*.tcc": "c",
+        "fstream": "c",
+        "iosfwd": "c",
+        "istream": "c",
+        "limits": "c",
+        "sstream": "c",
+        "streambuf": "c",
+        "input.h": "c",
+        "thread.h": "c",
+        "string_view": "c",
+        "syscall-nr.h": "c"
+    }
+}
