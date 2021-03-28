@@ -502,8 +502,8 @@ setup_stack (void **esp, char **saveptr, const char *filename)
 
   free(argv);
   free(cont);
-  hex_dump(0, *esp, s, 1); 
-  hex_dump((int)*esp+s, *esp, s, 1);
+  //hex_dump(0, *esp, s, 1); 
+  //hex_dump((int)*esp+s, *esp, s, 1);
   return success;
 }
 
