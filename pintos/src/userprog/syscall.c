@@ -24,6 +24,7 @@
 #define FD_START  ( 3 )                     /* first number able to be used as a descriptor */
 
 #define RET_ERROR ( -1 )                    /* Error return value                           */
+#define RET_OKAY  (  0 )                    /* Error return value                           */
 
 #define STACK_ALIGNMENT_SINGLE ( 4 )        /* Alignment of first parameter on stack        */
 #define STACK_ALIGNMENT_DOUBLE ( 8 )        /* Alignment of second parameter on stack       */
@@ -48,7 +49,7 @@ static void               call_fail     ( void );
 static void               check_user_mem( const uint8_t *addr );
 static struct file_desc * find_file_dsc ( thread * thrd, int fd );
 static int                read_usr_mem  ( void * src, void * dst, size_t byte_cnt );
-
+int                       page_ptr      (void *vaddr);
 
 /* Reads a byte at user virtual address UADDR.
 
@@ -62,14 +63,13 @@ static int
 
 get_user (const uint8_t *uaddr){
 
+  int result = RET_ERROR;
 
-  if (! ((void*)uaddr < PHYS_BASE)) {
-    return -1;
-  }
-  int result;
+  if ( (void*)uaddr < PHYS_BASE ) {
+    
 
     asm ("movl $1f, %0; movzbl %1, %0; 1:"       : "=&a" (result) : "m" (*uaddr));
-
+  }
   return result;
 
 } 
@@ -122,7 +122,15 @@ static int read_usr_mem( void * src, void * dst, size_t byte_cnt )
   return byte_cnt;
 }
 
-
+// Used to get page pointer
+// source in the design document
+int page_ptr(void *vaddr){
+  int ret_val = RET_ERROR;
+  void * ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
+  if(ptr)
+    ret_val = RET_OK; // ( x ) < 0 means there is error
+  return (int)ptr;
+}
 
 void
 syscall_init (void) 
