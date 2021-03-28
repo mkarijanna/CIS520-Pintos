@@ -103,6 +103,11 @@ typedef struct thread
 #endif
     struct semaphore *temp_sema;       /* temporary solution while waiting on get_child_process */
     struct thread * parent;              /* temp way to keep track of parent */
+    /* Owned by process.c. */
+    /* The list of this thread's children */
+    struct list children_list;
+    /* List element for the children list */
+    struct list_elem child_elem;
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   }thread;
