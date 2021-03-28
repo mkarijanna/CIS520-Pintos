@@ -65,7 +65,7 @@ get_user (const uint8_t *uaddr){
 
   int result = RET_ERROR;
 
-  if ( (void*)uaddr < PHYS_BASE ) {
+  if ( (void*)uaddr < PHYS_BASE && page_ptr( uaddr ) != RET_ERROR ) {
     
 
     asm ("movl $1f, %0; movzbl %1, %0; 1:"       : "=&a" (result) : "m" (*uaddr));
