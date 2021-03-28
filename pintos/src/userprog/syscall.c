@@ -128,7 +128,7 @@ int page_ptr(void *vaddr){
   int ret_val = RET_ERROR;
   void * ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
   if(ptr)
-    ret_val = RET_OK; // ( x ) < 0 means there is error
+    ret_val = RET_OKAY; // ( x ) < 0 means there is error
   return (int)ptr;
 }
 
