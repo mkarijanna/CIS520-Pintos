@@ -122,6 +122,12 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
+
+  if( cur->exec_file )
+  {
+    file_allow_write( cur->exec_file );
+    file_close( cur->exec_file );
+  }
 }
 
 /* Sets up the CPU for running user code in the current
@@ -320,7 +326,8 @@ load (const char *file_name, void (**eip) (void), void **esp, char **saveptr)
 
  done:
   /* We arrive here whether the load is successful or not. */
-  file_close (file);
+  file_deny_write( file );
+  thread_current()->exec_file = file;
   return success;
 }
 
