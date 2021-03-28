@@ -33,6 +33,7 @@
 static void syscall_handler (struct intr_frame *);
 
 /******************** System call prototypes *********************/
+void      syscall_exit    ( int status                                  );
 void      syscall_close   ( int fd                                      );
 int       syscall_filesize( int fd                                      );
 int       syscall_open    ( const char * file                           );
@@ -146,7 +147,10 @@ syscall_handler (struct intr_frame *f )
     break;
 
   case SYS_EXIT:
-    /* code */
+    int status;
+
+    read_usr_mem( f->esp + STACK_ALIGNMENT_SINGLE, &status, sizeof( status ) );
+    syscall_exit(status);
     break;
   case SYS_EXEC:
     /* code */
@@ -241,6 +245,18 @@ syscall_handler (struct intr_frame *f )
   }
 
 }
+
+void
+syscall_exit (int status)
+{
+  thread *t = thread_current();
+  if (status < 0)
+  {
+    status = -1;
+  }
+  printf("%s: exit(%d)", t->name, status);
+}
+
 /**************************** Kelcie's Code now ********************/
 
 /****************************** Helper functions *******************************/
