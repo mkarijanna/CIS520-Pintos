@@ -129,6 +129,7 @@ void
 syscall_init (void) 
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
+  lock_init( &lock_file );
 }
 
 static void
@@ -418,7 +419,7 @@ int syscall_open( const char * file )
     file_info->id = ( list_entry( list_back( desc_list ), struct file_desc, elem)->id ) + 1;
   }
 
-  //list_push_back( desc_list, &( file_info->elem ) );
+  list_push_back( desc_list, &( file_info->elem ) );
   lock_release( &lock_file );
 
   return file_info->id;
