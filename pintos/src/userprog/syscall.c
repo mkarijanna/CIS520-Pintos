@@ -147,11 +147,13 @@ syscall_handler (struct intr_frame *f )
     break;
 
   case SYS_EXIT:
+  {
     int status;
 
     read_usr_mem( f->esp + STACK_ALIGNMENT_SINGLE, &status, sizeof( status ) );
     syscall_exit(status);
     break;
+  }
   case SYS_EXEC:
     /* code */
     break;
@@ -275,8 +277,8 @@ static void call_fail( void )
   if( lock_held_by_current_thread( &lock_file ) )
     lock_release( &lock_file );
 
-  //exit( RET_ERROR );
-  thread_exit();
+  syscall_exit( RET_ERROR );
+  //thread_exit();
 } 
 
 /**********************************************************************
