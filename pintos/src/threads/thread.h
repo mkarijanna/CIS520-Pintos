@@ -98,8 +98,11 @@ typedef struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
-#endif
+    bool success;                       /* Detect user thread's success */
 
+#endif
+    struct semaphore *temp_sema;       /* temporary solution while waiting on get_child_process */
+    struct thread * parent;              /* temp way to keep track of parent */
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   }thread;
@@ -142,4 +145,6 @@ int thread_get_load_avg (void);
 
 void thread_sleep_time( int64_t tme );
 
+thread* find_thread_tid(tid_t tid);
+bool is_thread_running(tid_t tid);
 #endif /* threads/thread.h */
