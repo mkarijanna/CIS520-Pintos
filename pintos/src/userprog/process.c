@@ -29,23 +29,34 @@ tid_t
 process_execute (const char *file_name) 
 {
   char *fn_copy, *saveptr, *fn;
-
   tid_t tid;
-
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
-
   fn = malloc(strlen(fn_copy)+1);
   strlcpy (fn, fn_copy, PGSIZE);
   fn = strtok_r((char*)fn, " ", &saveptr );
   tid = thread_create (fn, PRI_DEFAULT, start_process, fn_copy);
-  if (tid == TID_ERROR)
+   
+  if (tid == TID_ERROR) {
     palloc_free_page (fn_copy); 
-  free(fn);
+  }
+  else {
+    new_thread_tid = tid;
+    /* Disable interrupts, as required by thread_foreach  */
+    enum intr_level old_level = intr_disable();
+    /* Find the thread that matches the TID of the new thread we just created,
+       and set it to new_thread */
+    thread_foreach(*check_tid, NULL);
+    /* wait until we are done loading the new thread */
+    sema_down(&new_thread->load_sema);
+    /* Finally, add the new thread we created to the current thread's list of children */
+    list_push_back(&thread_current()->children_list, &new_thread->child_elem);
+    intr_set_level (old_level);
+  }
   return tid;
 }
 
@@ -66,7 +77,11 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp, &saveptr);
 
-  /* If load failed, quit. */
+    /* Indicate if the load was succesful */
+  thread_current()->loaded = success;
+  /* Wake the thread back up */
+  sema_up(&thread_current()->load_sema);
+   /* If load failed, quit. */
   palloc_free_page (file_name);
   if (!success) 
     thread_exit ();
@@ -79,6 +94,7 @@ start_process (void *file_name_)
      and jump to it. */
   asm volatile ("movl %0, %%esp; jmp intr_exit" : : "g" (&if_) : "memory");
   NOT_REACHED ();
+   
 }
 
 /* Waits for thread TID to die and returns its exit status.  If
@@ -97,6 +113,28 @@ process_wait (tid_t child_tid UNUSED)
     thread_yield();
   }
   return -1;
+  
+  /* The parent (current) process */
+  struct thread* parent = thread_current();
+  /* This parent's child process */
+  struct thread* child = NULL;
+  /* Ensure there is a child we need to wait for */
+  if(list_empty(&parent->children_list)) {
+    return -1;
+  }
+  /* Look through the parent's list of children for a child with child_tid */
+  child = process_get_child(parent, child_tid);
+  /* If the child is not found, return -1 */
+  if(child == NULL) {
+    return -1;
+  }
+  /* Remove the child we are waiting on from the list */
+  list_remove(&child->child_elem);
+  /* Make the parent wait until the child is done executing
+     (essentially acts like a condition variable) */
+  sema_down(&child->alive_sema);
+  /* Return the exit status of the child when it is terminated */
+  return child->exit_status;
 }
 
 /* Free the current process's resources. */
