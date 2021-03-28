@@ -165,8 +165,16 @@ syscall_handler (struct intr_frame *f )
     /* code */
     break;
   case SYS_OPEN:
-    /* code */
+  {
+    const char * fn;
+    int ret_val;
+
+    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &fn, sizeof( fn ) );
+
+    ret_val = syscall_open( fn );
+    f->eax = ret_val;
     break;
+  }
 
   case SYS_FILESIZE:
   {
