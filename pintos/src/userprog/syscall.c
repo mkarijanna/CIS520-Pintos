@@ -62,16 +62,14 @@ static int
 
 get_user (const uint8_t *uaddr){
 
+
+  if (! ((void*)uaddr < PHYS_BASE)) {
+    return -1;
+  }
   int result;
 
-  if( ( void * ) uaddr > PHYS_BASE )
-  {
-    result = RET_ERROR;
-  }
-  else
-  {
     asm ("movl $1f, %0; movzbl %1, %0; 1:"       : "=&a" (result) : "m" (*uaddr));
-  }
+
   return result;
 
 } 
