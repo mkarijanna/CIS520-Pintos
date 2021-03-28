@@ -453,7 +453,7 @@ setup_stack (void **esp, char **saveptr, const char *filename)
   char** argv = malloc(2*sizeof(char*));
   char** cont = malloc(2*sizeof(char*));
   
-  int i, argc = 0;
+  int i, argc, s = 0;
   int arg_size = 2;
   // copy command line into cont and resize to necessary size
   for (token = (char*)filename; token != NULL; token = strtok_r(NULL, " ", saveptr)){
@@ -469,6 +469,7 @@ setup_stack (void **esp, char **saveptr, const char *filename)
 
   for (i = argc-1; i >= 0; i--){
     *esp -= strlen(cont[i])+1;
+    s += strlen(cont[i])+1;
     argv[i] = *esp;
     memcpy (*esp, cont[i], strlen(cont[i])+1);
 
@@ -477,26 +478,32 @@ setup_stack (void **esp, char **saveptr, const char *filename)
   argv[argc] = 0;
   int word_align = (size_t) *esp % 4;
   *esp -= word_align;
+  s += word_align;
   memset (*esp, 0, word_align);
   
   for (i = argc; i >= 0; i--){
     *esp -= sizeof(char*);
+    s += sizeof(char*);
     memcpy (*esp, &argv[i], sizeof(char*));
   }
   
   token = *esp;
   *esp -= sizeof (char**);
+  s += sizeof (char**);
   memcpy(*esp, &token, sizeof(char**));
 
   *esp -= sizeof (int);
+  s += sizeof (int);
   memcpy(*esp, &argc, sizeof(int));
 
   *esp -= sizeof(void*);
+  s += sizeof(void*);
   memcpy(*esp, &argv[argc], sizeof (void*));
 
   free(argv);
   free(cont);
-  
+  hex_dump(0, *esp, s, 1); 
+  hex_dump((int)*esp+s, *esp, s, 1);
   return success;
 }
 
