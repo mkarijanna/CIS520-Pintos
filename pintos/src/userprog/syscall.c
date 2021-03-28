@@ -3,6 +3,7 @@
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "stdbool.h"
 
 #include "devices/shutdown.h"
 #include "filesys/file.h"
@@ -150,6 +151,7 @@ syscall_handler (struct intr_frame *f )
   switch (syscall_num)
   {
   case SYS_HALT:
+    syscall_halt();
     break;
 
   case SYS_EXIT:
@@ -162,7 +164,11 @@ syscall_handler (struct intr_frame *f )
   }
   case SYS_EXEC:
     /* code */
+  {
+    
+
     break;
+  }
   case SYS_WAIT:
     /* code */
     break;
@@ -261,7 +267,60 @@ syscall_handler (struct intr_frame *f )
   }
 
 }
+/*Karijuanna Code starts */
+void syscall_halt(void) 
+{
+  /* From shutdown.h*/
+  shutdown_power_off(); 
+}
 
+/* Runs the executable whose name is given in cmd_line, passing any given arguments, 
+   and returns the new process's program id (pid). */
+tid_t 
+exec (const char *cmd_line) 
+{
+  struct thread* parent = thread_current();
+  /* Program cannot run */
+  if(cmd_line == NULL) {
+    return -1;
+  }
+  lock_acquire(&lock_file);
+  /* Create a new process */
+  tid_t child_tid = process_execute(cmd_line);
+  struct thread* child = process_get_child(parent, child_tid);
+  lock_release(&lock_file);
+  return child_tid;
+}
+
+/* Waits for a child process pid and retrieves the child's exit status. */
+int 
+wait (tid_t pid)
+{
+  /* If the thread created is a valid thread, then we must disable interupts, 
+     and add it to this threads list of child threads. */
+  return process_wait(pid);
+}
+
+/* Creates a new file called file initially initial_size bytes in size. 
+   Returns true if successful, false otherwise. */
+bool 
+create (const char *file, unsigned initial_size)
+{
+  lock_acquire(&lock_file);
+  bool file_status = filesys_create(file, initial_size);
+  lock_release(&lock_file);
+  return file_status;
+}
+
+/* Deletes the file called file. Returns true if successful, false otherwise. */
+bool 
+remove (const char *file) {
+  /* Use a lock to avoid race conditions */
+  lock_acquire(&lock_file);
+  bool was_removed = filesys_remove(file);
+  lock_release(&lock_file);
+  return was_removed;
+}
 void
 syscall_exit (int status)
 {
@@ -273,6 +332,7 @@ syscall_exit (int status)
   printf("%s: exit(%d)\n", t->name, status);
   thread_exit();
 }
+/*Karijuanna Code ends */
 
 /**************************** Kelcie's Code now ********************/
 
