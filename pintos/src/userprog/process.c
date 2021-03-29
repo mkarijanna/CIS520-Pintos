@@ -146,9 +146,44 @@ finish_step:
 int
 process_wait (tid_t child_tid UNUSED) 
 {
-  while(is_thread_running(child_tid)){
-    thread_yield();
+  struct thread * t = thread_current();
+  struct list_elem * item;
+  struct process_control * pc_ch = NULL;
+
+  if( !list_empty( t->child_list ) )
+  {
+    for( item = list_front( t->child_list ); item != list_end( t->child_list ); item = list_next( item ) )
+    {
+      struct process_control * pc = list_entry( item, struct process_control, elem );
+      if( pc->id == child_tid )
+      {
+        pc_ch = pc;
+        break;
+      }
+    }
   }
+
+  if( !pc_ch )
+  {
+    return -1;
+  }
+
+  if( pc_ch->waiting )
+  {
+    return -1;
+  }
+  else
+  {
+    pc_ch->waiting = true;
+  }
+
+  if( !pc_ch->exited )
+  {
+    sema_down( &( pc_ch->sema_waiting ) );
+  }
+
+  palloc_free_page( pc_ch );
+
   return -1;
 }
 
