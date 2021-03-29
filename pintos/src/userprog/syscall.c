@@ -319,11 +319,12 @@ void syscall_halt(void)
 tid_t 
 syscall_exec (const char *cmd_line) 
 {
+  /*-------------------------------------------------------------------
+  Check the pointer is within valid memory
+  -------------------------------------------------------------------*/
+  check_user_mem( ( const uint8_t * ) cmd_line );
   struct thread* parent = thread_current();
-  /* Program cannot run */
-  if(cmd_line == NULL) {
-    return -1;
-  }
+
   lock_acquire(&lock_file);
   /* Create a new process */
   tid_t child_tid = process_execute(cmd_line);
