@@ -211,6 +211,12 @@ process_exit (void)
       pagedir_destroy (pd);
     }
 
+  if( cur->pc )
+  {
+    cur->pc->exited = true;
+    sema_up( &cur->pc->sema_waiting ); 
+  }
+
   if( cur->exec_file )
   {
     file_allow_write( cur->exec_file );
