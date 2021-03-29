@@ -3,19 +3,18 @@
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
-#include "stdbool.h"
+#include <stdint.h>
 
 #include "devices/shutdown.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
-#include "threads/init.h"
 #include "userprog/process.h"
 
 #include "devices/input.h"
 #include "threads/palloc.h"
 #include "threads/synch.h"
-#include "threads/vaddr.h"
 #include "lib/syscall-nr.h"
+#include "threads/vaddr.h"
 
 #define ONE_BYTE_MASK ( 0xFF )              /* Mask for keeping only the lower 8 bits       */
 
@@ -347,6 +346,10 @@ syscall_wait (tid_t pid)
 bool 
 syscall_create (const char *file, unsigned initial_size)
 {
+  if(file == NULL){
+    return false;
+  }
+  check_user_mem( ( const uint8_t * ) file );
   lock_acquire(&lock_file);
   bool file_status = filesys_create(file, initial_size);
   lock_release(&lock_file);
