@@ -214,9 +214,12 @@ syscall_handler (struct intr_frame *f )
   case SYS_WAIT:
     /* code */
     {
-      int * args = get_args(f, 1);
-      f-> eax = syscall_wait(args[0]);
-    break;
+      tid_t pid;
+      read_usr_mem(f->esp + 4, &pid, sizeof(tid_t));
+
+      int ret = syscall_wait(pid);
+      f->eax = (uint32_t) ret;
+      break;
   }
   case SYS_CREATE:
     /* code */
