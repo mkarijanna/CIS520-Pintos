@@ -165,19 +165,41 @@ syscall_handler (struct intr_frame *f )
   case SYS_EXEC:
     /* code */
   {
+    const char * cmd;
+    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
     
-
+    f->eax = syscall_exec(cmd);
     break;
   }
   case SYS_WAIT:
     /* code */
+    {
+    int * cmd;
+    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
+    
+    f->eax = syscall_wait(cmd);
     break;
+  }
   case SYS_CREATE:
     /* code */
-    break;  
+    {
+    const char * cmd;
+    unsigned size;
+    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
+        read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &size, sizeof( size ) );
+
+    f->eax = syscall_create(cmd, size);
+    break;
+  }  
   case SYS_REMOVE:
     /* code */
+    {
+     const char * cmd;
+    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
+    
+    f->eax = syscall_remove(cmd);
     break;
+  }
   case SYS_OPEN:
   {
     const char * fn;
@@ -277,7 +299,7 @@ void syscall_halt(void)
 /* Runs the executable whose name is given in cmd_line, passing any given arguments, 
    and returns the new process's program id (pid). */
 tid_t 
-exec (const char *cmd_line) 
+syscall_exec (const char *cmd_line) 
 {
   struct thread* parent = thread_current();
   /* Program cannot run */
@@ -287,14 +309,14 @@ exec (const char *cmd_line)
   lock_acquire(&lock_file);
   /* Create a new process */
   tid_t child_tid = process_execute(cmd_line);
-  struct thread* child = process_get_child(parent, child_tid);
+  //struct thread* child = process_get_child(parent, child_tid);
   lock_release(&lock_file);
   return child_tid;
 }
 
 /* Waits for a child process pid and retrieves the child's exit status. */
 int 
-wait (tid_t pid)
+syscall_wait (tid_t pid)
 {
   /* If the thread created is a valid thread, then we must disable interupts, 
      and add it to this threads list of child threads. */
@@ -304,7 +326,7 @@ wait (tid_t pid)
 /* Creates a new file called file initially initial_size bytes in size. 
    Returns true if successful, false otherwise. */
 bool 
-create (const char *file, unsigned initial_size)
+syscall_create (const char *file, unsigned initial_size)
 {
   lock_acquire(&lock_file);
   bool file_status = filesys_create(file, initial_size);
@@ -314,7 +336,7 @@ create (const char *file, unsigned initial_size)
 
 /* Deletes the file called file. Returns true if successful, false otherwise. */
 bool 
-remove (const char *file) {
+syscall_remove (const char *file) {
   /* Use a lock to avoid race conditions */
   lock_acquire(&lock_file);
   bool was_removed = filesys_remove(file);
