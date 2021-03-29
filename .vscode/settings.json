@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "vaddr.h": "c",
+        "stdint.h": "c",
+        "init.h": "c",
+        "syscall-nr.h": "c",
+        "process.h": "c"
+    }
+}
