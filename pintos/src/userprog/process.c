@@ -163,7 +163,7 @@ process_wait (tid_t child_tid UNUSED)
     }
   }
 
-  if( !pc_ch )
+  if( pc_ch==NULL )
   {
     return -1;
   }
