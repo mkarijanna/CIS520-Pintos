@@ -114,8 +114,6 @@ start_process (void * pc_ )
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (cmds, &if_.eip, &if_.esp, &saveptr);
 
-finish_step:
-
   pc->id = success ? (tid_t)( thread_current()->tid ) : TID_ERROR;
   thread_current()->pc = pc;
 
@@ -226,6 +224,14 @@ process_exit (void)
     cur->pc->exited = true;
     sema_up( &cur->pc->sema_waiting ); 
   }
+
+  pd = cur->pagedir;
+  if (pd != NULL)
+    {
+      cur->pagedir = NULL;
+      pagedir_activate (NULL);
+      pagedir_destroy (pd);
+    }
 }
 
 /* Sets up the CPU for running user code in the current
