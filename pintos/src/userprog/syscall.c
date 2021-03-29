@@ -404,6 +404,10 @@ void
 syscall_exit (int status)
 {
   thread *t = thread_current();
+  if( t->pc != NULL )
+  {
+    t->pc->exit_val = status;
+  }
   if (status < 0)
   {
     status = -1;

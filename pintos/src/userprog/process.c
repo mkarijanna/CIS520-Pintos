@@ -60,7 +60,7 @@ process_execute (const char *file_name)
   pc->id = TID_INITIALIZING;
   pc->cmd = fn_copy;
   pc->parent = thread_current();
-
+  pc->exit_val = -1;
   pc->waiting = false;
   pc->exited = false;
 
@@ -184,7 +184,7 @@ process_wait (tid_t child_tid UNUSED)
 
   palloc_free_page( pc_ch );
 
-  return -1;
+  return pc_ch->exit_val;
 }
 
 /* Free the current process's resources. */

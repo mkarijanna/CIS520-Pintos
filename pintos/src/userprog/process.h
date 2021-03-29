@@ -17,6 +17,7 @@ void process_activate (void);
 typedef struct process_control {
     int id;
     const char * cmd;
+    int exit_val;
     struct semaphore sema_loading;
     struct semaphore sema_waiting;
     struct list_elem elem;
