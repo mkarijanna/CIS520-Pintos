@@ -46,6 +46,7 @@ int       syscall_read    ( int fd, void * buffer, unsigned size        );
 void      syscall_seek    ( int fd, unsigned position                   );
 unsigned  syscall_tell    ( int fd                                      );
 int       syscall_write   ( int fd, const void * buffer, unsigned size  );
+int valpage_ptr(void *vaddr);
 struct lock lock_file;
 
 /******************** Helper function prototypes *************************/
@@ -150,11 +151,19 @@ get_args(struct intr_frame *f, int n){
   }
   return args;
 }
+
+int valpage_ptr(void *vaddr){
+  int ret_val = RET_ERROR;
+  void * ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
+  if(ptr)
+    call_fail();
+  return (int)ptr;
+}
 // Used to get args to call each function 
 void
 validate_str (const void* str)
 {
-    for (; * (char *) page_ptr(str) != 0; str = (char *) str + 1);
+    for (; * (char *) valpage_ptr(str) != 0; str = (char *) str + 1);
 }
 
 static void
