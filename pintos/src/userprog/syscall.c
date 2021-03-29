@@ -221,19 +221,28 @@ syscall_handler (struct intr_frame *f )
   case SYS_CREATE:
     /* code */
   {
-    
+    const char* filename;
+    unsigned initial_size;
+    bool return_code;
 
-    int * args = get_args(f,2);
-    f-> eax = syscall_create((const char*)args[0], args[1]);
+    read_usr_mem(f->esp + 4, &filename, sizeof(filename));
+    read_usr_mem(f->esp + 8, &initial_size, sizeof(initial_size));
+
+    return_code = syscall_create(filename, initial_size);
+    f->eax = return_code;
     break;
   }  
   case SYS_REMOVE:
     /* code */
   {
-    int * args = get_args(f, 1);
-    args[0] = page_ptr((const void*)args[0]);
-    f->eax = syscall_remove((const char *)args[0]);
-    break;
+    const char* filename;
+      bool return_code;
+
+      read_usr_mem(f->esp + 4, &filename, sizeof(filename));
+
+      return_code = syscall_remove(filename);
+      f->eax = return_code;
+      break;
   }
   case SYS_OPEN:
   {
