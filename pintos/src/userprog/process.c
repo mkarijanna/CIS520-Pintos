@@ -181,7 +181,7 @@ process_wait (tid_t child_tid UNUSED)
   {
     sema_down( &( pc_ch->sema_waiting ) );
   }
-      list_remove(item);
+  list_remove(item);
 
   int ret_val = pc_ch->exit_val;
   palloc_free_page( pc_ch );
@@ -213,16 +213,18 @@ process_exit (void)
       pagedir_destroy (pd);
     }
 
-  if( cur->pc )
-  {
-    cur->pc->exited = true;
-    sema_up( &cur->pc->sema_waiting ); 
-  }
+
 
   if( cur->exec_file )
   {
     file_allow_write( cur->exec_file );
     file_close( cur->exec_file );
+  }
+
+    if( cur->pc )
+  {
+    cur->pc->exited = true;
+    sema_up( &cur->pc->sema_waiting ); 
   }
 }
 
