@@ -180,8 +180,9 @@ process_wait (tid_t child_tid UNUSED)
   if( !pc_ch->exited )
   {
     sema_down( &( pc_ch->sema_waiting ) );
-    list_remove(item);
   }
+      list_remove(item);
+
   int ret_val = pc_ch->exit_val;
   palloc_free_page( pc_ch );
 
