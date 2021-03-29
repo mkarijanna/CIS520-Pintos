@@ -105,8 +105,7 @@ typedef struct thread
     struct list child_list;
     struct process_control * pc;
 #endif
-    struct semaphore *temp_sema;       /* temporary solution while waiting on get_child_process */
-    struct thread * parent;              /* temp way to keep track of parent */
+
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   }thread;
