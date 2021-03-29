@@ -56,7 +56,8 @@ static void               check_user_mem( const uint8_t *addr );
 static struct file_desc * find_file_dsc ( thread * thrd, int fd );
 static int                read_usr_mem  ( void * src, void * dst, size_t byte_cnt );
 int                       page_ptr      (void *vaddr);
-
+static int *              get_args      (struct intr_frame *f, int n              );
+static void               validate_ptr  (const void *ptr                          );
 /* Reads a byte at user virtual address UADDR.
 
    UADDR must be below PHYS_BASE. -1 is return if it is not
@@ -137,7 +138,26 @@ int page_ptr(void *vaddr){
     ret_val = RET_OKAY; // ( x ) < 0 means there is error
   return ret_val;
 }
-
+static int *
+get_args(struct intr_frame *f, int n){
+  int args[n];
+  int i;
+  int * temp;
+  for(i = 0; i<n; i++){
+    temp = (int *) f->esp + i + 1;
+    validate_ptr((const void *) temp);
+    args[i] = *temp;
+  }
+  return args;
+}
+static void
+validate_ptr (const void *ptr)
+{
+    if (ptr < ((void *) 0x08048000) || !is_user_vaddr(ptr))
+    {
+      syscall_exit(-1);
+    }
+}
 void
 syscall_init (void) 
 {
@@ -170,39 +190,33 @@ syscall_handler (struct intr_frame *f )
   case SYS_EXEC:
     /* code */
   {
-    const char * cmd;
-    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
-    
-    f->eax = syscall_exec(cmd);
+    int * args = get_args(f, 1);
+    args[0] = page_ptr((const void *)args[0]);
+    f->eax = syscall_exec((const char*) args[0]);
     break;
   }
   case SYS_WAIT:
     /* code */
     {
-    int * cmd;
-    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
-    
-    f->eax = syscall_wait(cmd);
+      int * args = get_args(f, 1);
+      f-> eax = syscall_wait(args[0]);
     break;
   }
   case SYS_CREATE:
     /* code */
-    {
-    const char * cmd;
-    unsigned size;
-    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
-        read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &size, sizeof( size ) );
+  {
+    
 
-    f->eax = syscall_create(cmd, size);
+    int * args = get_args(f,2);
+    f-> eax = syscall_create((const char*)args[0], args[1]);
     break;
   }  
   case SYS_REMOVE:
     /* code */
-    {
-     const char * cmd;
-    read_usr_mem( f->esp +STACK_ALIGNMENT_SINGLE, &cmd, sizeof( cmd ) );
-    
-    f->eax = syscall_remove(cmd);
+  {
+    int * args = get_args(f, 1);
+    args[0] = page_ptr((const void*)args[0]);
+    f->eax = syscall_remove((const char *)args[0]);
     break;
   }
   case SYS_OPEN:
