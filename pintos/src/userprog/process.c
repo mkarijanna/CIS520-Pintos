@@ -323,11 +323,11 @@ load (const char *file_name, void (**eip) (void), void **esp, char **saveptr)
   *eip = (void (*) (void)) ehdr.e_entry;
 
   success = true;
-
- done:
-  /* We arrive here whether the load is successful or not. */
   file_deny_write( file );
   thread_current()->exec_file = file;
+ done:
+  /* We arrive here whether the load is successful or not. */
+
   return success;
 }
 
