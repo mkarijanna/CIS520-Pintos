@@ -101,27 +101,18 @@ static void
 start_process (void * pc_ )
 {
   struct process_control *pc = pc_;
+    char *file_name = pc->cmd;
   char *saveptr;
   char * cmds = ( char * ) pc->cmd;
   struct intr_frame if_;
-  bool success = false;
-  const char **cmd_tokens = (const char**) palloc_get_page(0);
-  if (cmd_tokens == NULL) {
-    printf("[Error] Kernel Error: Not enough memory\n");
-    goto finish_step; // pid being -1, release lock, clean resources
-  }
-  char * token;
-  int cnt = 0;
-  for( token = strtok_r(cmds, " ", &saveptr ); token != NULL; token = strtok_r( NULL, " ", &saveptr ) )
-    cmd_tokens[ cnt++ ] = token;
-
+    bool success;
+  file_name = strtok_r ((char*)file_name, " ", &saveptr);
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (cmds, &if_.eip, &if_.esp, &saveptr);
-  palloc_free_page (cmd_tokens);
 
 finish_step:
 
