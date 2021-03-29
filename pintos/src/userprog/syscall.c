@@ -189,9 +189,9 @@ syscall_handler (struct intr_frame *f )
   case SYS_EXEC:
     /* code */
   {
-    int * args = get_args(f, 1);
-    args[0] = page_ptr((const void *)args[0]);
-    f->eax = syscall_exec((const char*) args[0]);
+    void * cmd_args;
+    read_usr_mem( f->esp + STACK_ALIGNMENT_SINGLE, &cmd_args, sizeof( cmd_args ) );
+    f->eax = syscall_exec((const char*) cmd_args );;
     break;
   }
   case SYS_WAIT:
