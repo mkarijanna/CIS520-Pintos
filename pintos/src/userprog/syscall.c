@@ -371,11 +371,8 @@ syscall_wait (tid_t pid)
 bool 
 syscall_create (const char *file, unsigned initial_size)
 {
-  if(file == NULL){
-    call_fail();
-  }
-  check_user_mem( ( const uint8_t * ) file );
-  validate_str((const void *)file);
+  //check_user_mem( ( const uint8_t * ) file );
+  //validate_str((const void *)file);
   lock_acquire(&lock_file);
   bool file_status = filesys_create(file, initial_size);
   lock_release(&lock_file);
