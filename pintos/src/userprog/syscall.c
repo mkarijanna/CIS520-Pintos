@@ -331,7 +331,7 @@ syscall_handler (struct intr_frame *f )
   }
   default:
       printf ("Unknown Sytem Call!\n");
-      thread_exit ();
+      syscall_exit (-1);
     break;
   }
 
