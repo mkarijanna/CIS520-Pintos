@@ -55,8 +55,6 @@ static void               check_user_mem( const uint8_t *addr );
 static struct file_desc * find_file_dsc ( thread * thrd, int fd );
 static int                read_usr_mem  ( void * src, void * dst, size_t byte_cnt );
 int                       page_ptr      ( void *vaddr                             );
-static int *              get_args      ( struct intr_frame *f, int n             );
-static void               validate_ptr  ( const void *ptr                         );
 void                      validate_str  ( const void* str                         );
 /* Reads a byte at user virtual address UADDR.
 
@@ -139,18 +137,6 @@ int page_ptr(void *vaddr){
   return ret_val;
 }
 
-static int *
-get_args(struct intr_frame *f, int n){
-  int args[n];
-  int i;
-  int * temp;
-  for(i = 0; i<n; i++){
-    temp = (int *) f->esp + i + 1;
-    validate_ptr((const void *) temp);
-    args[i] = *temp;
-  }
-  return args;
-}
 
 int valpage_ptr(void *vaddr){
   int ret_val = RET_ERROR;
@@ -166,14 +152,6 @@ validate_str (const void* str)
     for (; * (char *) valpage_ptr(str) != 0; str = (char *) str + 1);
 }
 
-static void
-validate_ptr (const void *ptr)
-{
-    if (ptr < ((void *) 0x08048000) || !is_user_vaddr(ptr))
-    {
-      syscall_exit(-1);
-    }
-}
 void
 syscall_init (void) 
 {
