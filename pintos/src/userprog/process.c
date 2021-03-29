@@ -30,7 +30,7 @@ tid_t
 process_execute (const char *file_name) 
 {
   char *fn_copy, *saveptr, *fn;
-
+  struct process_control * pc;
   tid_t tid;
 
   /* Make a copy of FILE_NAME.
@@ -40,32 +40,81 @@ process_execute (const char *file_name)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
 
-  fn = malloc(strlen(fn_copy)+1);
+  fn = palloc_get_page (0);
+  if (fn == NULL)
+  {
+    palloc_free_page( fn_copy );
+    return TID_ERROR;
+  }
   strlcpy (fn, fn_copy, PGSIZE);
   fn = strtok_r((char*)fn, " ", &saveptr );
-  tid = thread_create (fn, PRI_DEFAULT, start_process, fn_copy);
-  process * p = malloc(sizeof(process));
-  p->child_id = tid;
-  sema_init(&p->load, 0);
-  thread_current()->child = p;
-  list_push_back(&thread_current()->child_list, &p->elem);
 
-  if (tid == TID_ERROR)
-    palloc_free_page (fn_copy); 
-  free(fn);
-  return tid;
+  pc = palloc_get_page( 0 );
+  if( pc == NULL )
+  {
+    palloc_free_page( fn_copy );
+    palloc_free_page( fn );
+    return TID_ERROR;
+  }
+
+  pc->id = TID_INITIALIZING;
+  pc->cmd = fn_copy;
+  pc->parent = thread_current();
+
+  pc->waiting = false;
+  pc->exited = false;
+
+  sema_init( &pc->sema_waiting, 0 );
+  sema_init( &pc->sema_loading, 0 );
+
+  tid = thread_create (fn, PRI_DEFAULT, start_process, pc);
+
+  if( tid == TID_ERROR )
+  {
+    goto create_failed;
+  }
+  /*-------------------------------------------------------------------
+  Wait for the child to be done loading before pushing to list
+  -------------------------------------------------------------------*/
+  sema_down( &pc->sema_loading );
+  
+  if( pc->id >= 0 )
+  {
+    list_push_back( &( thread_current()->child_list ), &pc->elem );
+  }
+  
+  if( fn_copy )
+    palloc_free_page ( fn_copy ); 
+  palloc_free_page( fn );
+  return pc->id;
+
+create_failed:
+    if( fn_copy ) palloc_free_page ( fn_copy ); 
+    if( fn ) palloc_free_page( fn );
+    if( pc ) palloc_free_page( pc );
+    return TID_ERROR;
 }
 
 /* A thread function that loads a user process and starts it
    running. */
 static void
-start_process (void *file_name_)
+start_process (void * pc_ )
 {
-  char *file_name = file_name_;
+  struct process_control *pc = pc_;
   char *saveptr;
+  char * cmds = ( char * ) pc->cmd;
   struct intr_frame if_;
-  bool success;
-  file_name = strtok_r ((char*)file_name, " ", &saveptr);
+  bool success = false;
+  const char **cmd_tokens = (const char**) palloc_get_page(0);
+  if (cmd_tokens == NULL) {
+    printf("[Error] Kernel Error: Not enough memory\n");
+    goto finish_step; // pid being -1, release lock, clean resources
+  }
+  char * token;
+  int cnt = 0;
+  for( token = strtok_r(cmds, " ", &saveptr ); token != NULL; token = strtok_r( NULL, " ", &saveptr ) )
+    cmd_tokens[ cnt++ ] = token;
+
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -74,8 +123,16 @@ start_process (void *file_name_)
   success = load (file_name, &if_.eip, &if_.esp, &saveptr);
   thread_current()->complete = success;
   sema_up (&thread_current()->child->load);
+  success = load (cmds, &if_.eip, &if_.esp, &saveptr);
+  palloc_free_page (cmd_tokens);
+
+finish_step:
+
+  pc->id = success ? (tid_t)( thread_current()->tid ) : TID_ERROR;
+  thread_current()->pc = pc;
+
+  sema_up (&pc->sema_loading);
   /* If load failed, quit. */
-  palloc_free_page (file_name);
   if (!success) 
     syscall_exit (-1);
 
@@ -460,7 +517,7 @@ setup_stack (void **esp, char **saveptr, const char *filename)
   {
     success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
     if (success)
-      *esp = PHYS_BASE-12;
+      *esp = PHYS_BASE;
     else
       palloc_free_page (kpage);
   }

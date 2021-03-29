@@ -16,6 +16,7 @@
         "input.h": "c",
         "thread.h": "c",
         "string_view": "c",
-        "syscall-nr.h": "c"
+        "syscall-nr.h": "c",
+        "process.h": "c"
     }
 }

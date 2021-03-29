@@ -103,7 +103,7 @@ typedef struct thread
     struct list file_descriptors;
     struct file * exec_file; 
     struct list child_list;
-    process * child;
+    struct process_control * pc;
 #endif
     struct semaphore *temp_sema;       /* temporary solution while waiting on get_child_process */
     struct thread * parent;              /* temp way to keep track of parent */
