@@ -181,10 +181,10 @@ process_wait (tid_t child_tid UNUSED)
   {
     sema_down( &( pc_ch->sema_waiting ) );
   }
-
+  int ret_val = pc_ch->exit_val;
   palloc_free_page( pc_ch );
 
-  return pc_ch->exit_val;
+  return ret_val;
 }
 
 /* Free the current process's resources. */
