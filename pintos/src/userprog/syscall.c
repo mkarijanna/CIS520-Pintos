@@ -53,9 +53,10 @@ static void               call_fail     ( void );
 static void               check_user_mem( const uint8_t *addr );
 static struct file_desc * find_file_dsc ( thread * thrd, int fd );
 static int                read_usr_mem  ( void * src, void * dst, size_t byte_cnt );
-int                       page_ptr      (void *vaddr);
-static int *              get_args      (struct intr_frame *f, int n              );
-static void               validate_ptr  (const void *ptr                          );
+int                       page_ptr      ( void *vaddr                             );
+static int *              get_args      ( struct intr_frame *f, int n             );
+static void               validate_ptr  ( const void *ptr                         );
+void                      validate_str  ( const void* str                         );
 /* Reads a byte at user virtual address UADDR.
 
    UADDR must be below PHYS_BASE. -1 is return if it is not
@@ -149,6 +150,13 @@ get_args(struct intr_frame *f, int n){
   }
   return args;
 }
+// Used to get args to call each function 
+void
+validate_str (const void* str)
+{
+    for (; * (char *) page_ptr(str) != 0; str = (char *) str + 1);
+}
+
 static void
 validate_ptr (const void *ptr)
 {
@@ -323,6 +331,7 @@ syscall_exec (const char *cmd_line)
   Check the pointer is within valid memory
   -------------------------------------------------------------------*/
   check_user_mem( ( const uint8_t * ) cmd_line );
+  validate_str( cmd_line );
   struct thread* parent = thread_current();
   /* Program cannot run */
   if(cmd_line == NULL) {
