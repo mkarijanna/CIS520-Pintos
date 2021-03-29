@@ -217,8 +217,7 @@ syscall_handler (struct intr_frame *f )
       tid_t pid;
       read_usr_mem(f->esp + 4, &pid, sizeof(tid_t));
 
-      int ret = syscall_wait(pid);
-      f->eax = (uint32_t) ret;
+      f->eax = (uint32_t) syscall_wait(pid);
       break;
   }
   case SYS_CREATE:
@@ -230,9 +229,7 @@ syscall_handler (struct intr_frame *f )
 
     read_usr_mem(f->esp + 4, &filename, sizeof(filename));
     read_usr_mem(f->esp + 8, &initial_size, sizeof(initial_size));
-
-    return_code = syscall_create(filename, initial_size);
-    f->eax = return_code;
+    f->eax = syscall_create(filename, initial_size);
     break;
   }  
   case SYS_REMOVE:
@@ -242,9 +239,7 @@ syscall_handler (struct intr_frame *f )
       bool return_code;
 
       read_usr_mem(f->esp + 4, &filename, sizeof(filename));
-
-      return_code = syscall_remove(filename);
-      f->eax = return_code;
+      f->eax = syscall_remove(filename);
       break;
   }
   case SYS_OPEN:
