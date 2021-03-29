@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "userprog/syscall.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -101,6 +102,8 @@ typedef struct thread
     bool success;                       /* Detect user thread's success */
     struct list file_descriptors;
     struct file * exec_file; 
+    struct list child_list;
+    process * child;
 #endif
     struct semaphore *temp_sema;       /* temporary solution while waiting on get_child_process */
     struct thread * parent;              /* temp way to keep track of parent */

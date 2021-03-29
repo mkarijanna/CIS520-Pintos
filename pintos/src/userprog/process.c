@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "userprog/gdt.h"
+#include "userprog/syscall.h"
 #include "userprog/pagedir.h"
 #include "userprog/tss.h"
 #include "filesys/directory.h"
@@ -43,6 +44,12 @@ process_execute (const char *file_name)
   strlcpy (fn, fn_copy, PGSIZE);
   fn = strtok_r((char*)fn, " ", &saveptr );
   tid = thread_create (fn, PRI_DEFAULT, start_process, fn_copy);
+  process * p = malloc(sizeof(process));
+  p->child_id = tid;
+  sema_init(&p->load, 0);
+  thread_current()->child = p;
+  list_push_back(&thread_current()->child_list, &p->elem);
+
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
   free(fn);
@@ -65,11 +72,12 @@ start_process (void *file_name_)
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp, &saveptr);
-
+  thread_current()->child->complete = success;
+  sema_up (&thread_current()->child->load);
   /* If load failed, quit. */
   palloc_free_page (file_name);
   if (!success) 
-    thread_exit ();
+    syscall_exit (-1);
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
