@@ -375,16 +375,7 @@ syscall_create (const char *file, unsigned initial_size)
     call_fail();
   }
   check_user_mem( ( const uint8_t * ) file );
-  char *temp = file;
-  while(*temp != '\0'){
-    temp = temp+1;
-    void *ptr = pagedir_get_page(thread_current()->pagedir, temp);
-    if (!ptr)
-    {
-          call_fail();
-
-    }
-  }
+  validate_str((const void *)file);
   lock_acquire(&lock_file);
   bool file_status = filesys_create(file, initial_size);
   lock_release(&lock_file);
