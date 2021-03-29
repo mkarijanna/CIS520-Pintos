@@ -47,7 +47,7 @@ void      syscall_seek    ( int fd, unsigned position                   );
 unsigned  syscall_tell    ( int fd                                      );
 int       syscall_write   ( int fd, const void * buffer, unsigned size  );
 struct lock lock_file;
-process * find_child(int id);
+
 /******************** Helper function prototypes *************************/
 static void               call_fail     ( void );
 static void               check_user_mem( const uint8_t *addr );
@@ -335,28 +335,9 @@ syscall_exec (const char *cmd_line)
   
   //struct thread* child = process_get_child(parent, child_tid);
   lock_release(&lock_file);
-    process * child = find_child(child_tid);
-  sema_down(&child->load);
-  if(child->complete == false)
-    return -1;
   return child_tid;
 }
-process * find_child(int id){
-  struct thread *t = thread_current();
-  struct list_elem *e;
-  struct list_elem *next;
-  
-  for (e = list_begin(&t->child_list); e != list_end(&t->child_list); e = next)
-  {
-    next = list_next(e);
-    process *p = list_entry(e, struct child_process, elem);
-    if (id == p->child_id)
-    {
-      return p;
-    }
-  }
-  return NULL;
-}
+
 
 /* Waits for a child process pid and retrieves the child's exit status. */
 int 

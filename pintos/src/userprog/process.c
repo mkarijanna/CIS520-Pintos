@@ -120,9 +120,6 @@ start_process (void * pc_ )
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (file_name, &if_.eip, &if_.esp, &saveptr);
-  thread_current()->complete = success;
-  sema_up (&thread_current()->child->load);
   success = load (cmds, &if_.eip, &if_.esp, &saveptr);
   palloc_free_page (cmd_tokens);
 
