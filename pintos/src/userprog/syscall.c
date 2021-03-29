@@ -155,7 +155,7 @@ get_args(struct intr_frame *f, int n){
 int valpage_ptr(void *vaddr){
   int ret_val = RET_ERROR;
   void * ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
-  if(ptr)
+  if(!ptr)
     call_fail();
   return (int)ptr;
 }
