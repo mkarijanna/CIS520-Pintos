@@ -150,9 +150,9 @@ process_wait (tid_t child_tid UNUSED)
   struct list_elem * item;
   struct process_control * pc_ch = NULL;
 
-  if( !list_empty( t->child_list ) )
+  if( !list_empty( &t->child_list ) )
   {
-    for( item = list_front( t->child_list ); item != list_end( t->child_list ); item = list_next( item ) )
+    for( item = list_front( &t->child_list ); item != list_end( &t->child_list ); item = list_next( item ) )
     {
       struct process_control * pc = list_entry( item, struct process_control, elem );
       if( pc->id == child_tid )
